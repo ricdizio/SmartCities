@@ -32,5 +32,8 @@
       "url": "http://www.opensource.org/licenses/MIT"
     }
   ],
-  "main": "index"
+  "main": "index",
+  "devDependencies": {
+    "socket-io": "^1.0.0"
+  }
 }

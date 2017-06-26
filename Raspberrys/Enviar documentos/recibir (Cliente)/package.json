@@ -1,0 +1,17 @@
+{
+  "name": "recibir",
+  "version": "1.0.0",
+  "description": "recibir",
+  "main": "index.js",
+  "dependencies": {
+    "delivery": "^0.0.6",
+    "fs": "^0.0.1-security",
+    "socket.io": "^2.0.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
