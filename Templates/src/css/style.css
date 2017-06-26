@@ -1,0 +1,28 @@
+*{
+	padding: 0;
+	margin: 0 auto;
+	background-color: #F2F2F2;
+	font-family: Helvetica;
+}
+.bloque{
+	color: white;
+	background-color: red;
+	padding: 50px;
+	text-align: center;
+
+}
+
+.bloque > h1{
+	background-color: red;
+	transition: 0.5s;
+	text-transform: uppercase;
+}
+
+.bloque > span{
+	background-color: red;
+	display: block;
+}
+
+.bloque > h1:hover{
+	letter-spacing: 10px;
+}
