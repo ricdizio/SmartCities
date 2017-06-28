@@ -34,15 +34,31 @@ socket.on('connect', function(){
         writePath = path;
     });
 
+    socket.on('getFile', function(fileName, clientPath){
+
+        delivery.connect();
+
+        delivery.on('delivery.connect',function(delivery){
+            delivery.send({
+                name: fileName,
+                path : clientPath
+            });
+
+            delivery.on('send.success',function(file){
+                console.log('File successfully sent to client!');
+            });
+        });
+    })
+
     delivery.on('receive.start',function(fileUID){
-        console.log('receiving a file!');
+        console.log('Receiving a file!');
     });
 
     delivery.on('receive.success',function(file){
         fs.writeFile(writePath + file.name, file.buffer, function(err){
             if(err){
                 console.log(err);
-            }else{
+            } else{
                 console.log('File saved.');
             };
         });
